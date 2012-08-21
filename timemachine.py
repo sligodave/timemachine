@@ -17,20 +17,42 @@ class TimeMachine(object):
 		local machine.
 		You can also optionally provide a machine in the timemachine to use
 		and a date of that machine to use.
-		These will have to be set eventually or we can't access paths to
-		read or extract.
+		At least a machine will have to be set eventually
+		or we can't access paths to read or extract.
+
+		mount_path: The path to where the external
+					timemachine hard drive is mounted.
+		machine: The name of the backed up computer in the timemachine. 
+					Tip: You'll find it at:
+					MOUNT_PATH/Backups.backupdb/MACHINE
+		date: The date of the backup in the timemachine you want to extract
+					from
+					Tip: You'll find it at:
+					MOUNT_PATH/Backups.backupdb/MACHINE/DATE
+		partition: The partition on the machine you want to access.
+					Tip: You'll find it in the date directory:
+					MOUNT_PATH/Backups.backupdb/MACHINE/DATE/PARTITION
+
+		Only the mount point needs to be provided here.
+		You can use the get_[machine|date|partition] methods to help you
+		set the other attributes after instantiation of the class instance.
 		"""
+		# We must at least be given a path to the mounted timemachine
 		self.mount_path = mount_path
+		# We don't attempt to guess the machine name, it must be set.
+		self.machine = None
+		# Some sensible defaults but can optionally be provided
 		self.date = 'Latest'
 		self.partition = 'Macintosh HD'
 
+		# Get all the machine options
 		self.get_machines()
-		if not machine == None:
+		if machine:
 			self.set_machine(machine)
-			if not date == None:
-				self.set_date(date)
-				if not partition == None:
-					self.set_partition(partition)
+		if date:
+			self.set_date(date)
+		if partition:
+			self.set_partition(partition)
 
 	def get_machines(self):
 		"""
@@ -77,6 +99,8 @@ class TimeMachine(object):
 		"""
 		Set what backup date in the machine you want to use.
 		"""
+		if not self.machine:
+			raise Exception('You must set the machine before setting the date')
 		if isinstance(date, int):
 			self.date = self.dates[date]
 		else:
@@ -87,6 +111,9 @@ class TimeMachine(object):
 		"""
 		Set what partition in the backup date you want to use.
 		"""
+		if not self.date:
+			raise Exception('You must set the date before '\
+			                'setting the partition')
 		if isinstance(partition, int):
 			self.partition = self.partitions[partition]
 		else:
