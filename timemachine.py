@@ -104,9 +104,13 @@ class TimeMachine(object):
 		real_path = join(self.mount_path, 'Backups.backupdb', self.machine,
 		                 self.date, self.partition, path)
 		removed = []
+		# Get what part of the provided path actually exists
 		while not exists(real_path):
 			real_path, head = split(real_path)
 			removed.append(head)
+		# Now work through the parts of the path that didn't exist
+		# Replacing each step with it's actual
+		# path in the dir_####### directories
 		while removed:
 			item = removed.pop()
 			if isdir(real_path):
@@ -126,6 +130,8 @@ class TimeMachine(object):
 				                 "dir_%s" % link, item)
 			else:
 				raise Exception('Need to handle non file and directory nodes.')
+			# Once we have finished we should go around again in case
+			# the last item appended to the list is also a link
 			if not removed and isfile(real_path):
 				removed.append('')
 		return real_path
@@ -147,6 +153,7 @@ class TimeMachine(object):
 		copy the path out of the timemachine to a specified location.
 		"""
 		real_path = self.get_real_path(path)
+		# Copy real path to the destination
 		copy(real_path, dest_path)
 
 	def copy_directory(self, path, dest_path):
@@ -159,8 +166,11 @@ class TimeMachine(object):
 		if path.endswith('/'):
 			path = path[:-1]
 		dest_path = join(dest_path, split(path)[1])
+		# Create the directory at the destination
 		if not exists(dest_path):
 			makedirs(dest_path)
+		# Copy each item in the real path into the new destination
+		# that we just created
 		for item in listdir(real_path):
 			new_item_path = join(path, item)
 			self.copy_path(new_item_path, dest_path)
