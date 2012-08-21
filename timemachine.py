@@ -10,6 +10,10 @@ class TimeMachine(object):
 	NOTE: There can be issues accessing some content because your
 	user doesn't have access because of the uid and gid from the
 	timemachine partition.
+	This is still a work in progress, so I'm working on that both to
+	bring it to your attention and also work around it.
+	It may come down to some smart sudo-ing.
+	For now, directories affected by this will just show up as size 0 files.
 	"""
 	def __init__(self, mount_path, machine=None, date=None, partition=None):
 		"""
