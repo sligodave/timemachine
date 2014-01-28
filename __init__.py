@@ -6,10 +6,6 @@ needed if you want full access to the Time Machine harddrive.
 NOTE: This only supports files and directories.
 It skips over links or any other non file/directory items.
 
-THOUGHTS:
-- Change the TimeMachine class to actually keep a cwd, so you can walk,
-list current directory and copy it or items from it etc.
-
 """
 
 import shutil
