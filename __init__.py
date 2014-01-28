@@ -6,6 +6,10 @@ needed if you want full access to the Time Machine harddrive.
 NOTE: This only supports files and directories.
 It skips over links or any other non file/directory items.
 
+THOUGHTS:
+- Change the TimeMachine class to actually keep a cwd, so you can walk,
+list current directory and copy it or items from it etc.
+
 """
 
 import shutil
@@ -179,43 +183,33 @@ class InteractiveTimeMachine(TimeMachine):
                   'Consider ctrl-C to start again.\n')
         # Get Host
         if self.hostname is None:
-            self.hostname = self.hostnames[
-                int(
-                    self.interactive_select(
-                        self.hostnames,
-                        'Select the hostname to use:'
-                    )
-                )
-            ]
+            self.hostname = self.interactive_select(
+                self.hostnames,
+                'Select the hostname to use:'
+            )
         # Get Version
         if self.version is None:
-            self.version = self.versions[
-                int(
-                    self.interactive_select(
-                        self.versions,
-                        'Select the version to use:'
-                    )
-                )
-            ]
+            self.version = self.interactive_select(
+                self.versions,
+                'Select the version to use:'
+            )
         # Get Partition
         if self.partition is None:
-            self.partition = self.partitions[
-                int(
-                    self.interactive_select(
-                        self.partitions,
-                        'Select the partition to use:'
-                    )
-                )
-            ]
+            self.partition = self.interactive_select(
+                self.partitions,
+                'Select the partition to use:'
+            )
         # List directories on loop to walk. Copy a file or directory to dst
         self.interactive_directory_select()
 
-    def interactive_select(self, choices, message='Please pick one of the following:', prompt=None):
+    def interactive_select(self, choices, message, evaluate=True):
         print(message)
         for i, choice in enumerate(choices):
             print('{}. {}'.format(i, choice))
-        prompt = 'Enter 0-{}: '.format(len(choices) - 1) if prompt is None else prompt
-        return raw_input(prompt)
+        choice = raw_input('Enter 0-{}: '.format(len(choices) - 1))
+        if evaluate:
+            return choices[int(choice)]
+        return choice
 
     def interactive_directory_select(self):
         path = '/'
@@ -223,7 +217,7 @@ class InteractiveTimeMachine(TimeMachine):
             real_path = self.get_real_path(path)
             choices = ['Quit', 'Copy directory {}'.format(path), '..'] + self.listdir(real_path)
             message = 'Select a directory to enter or file to copy:'
-            choice = int(self.interactive_select(choices, message))
+            choice = int(self.interactive_select(choices, message, False))
             if choice == 0:
                 return
             elif choice == 1:
