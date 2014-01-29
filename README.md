@@ -47,6 +47,6 @@ Fire on any issues or suggestions you have.
 
 
 ## Copyright and license
-Copyright 2013 David Higgins
+Copyright 2014 David Higgins
 
 [MIT License](LICENSE)
