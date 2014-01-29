@@ -245,5 +245,5 @@ if __name__ == "__main__":
             'python {} HARDDRIVE_MOUNTED_PATH\n'
             'OR\n'
             'python {} HARDDRIVE_MOUNTED_PATH HOSTNAME VERSION '
-            'PARTITION MAC_SOURCE_PATH DESTINATION_DIRECTORY'.format(sys.argv[0], sys.argv[0])
+            'PARTITION SOURCE_PATH DESTINATION_DIRECTORY'.format(sys.argv[0], sys.argv[0])
         )
