@@ -15,6 +15,7 @@ import os
 import os.path
 import sys
 import logging
+import collections
 
 
 logger = logging.getLogger('time_machine')
@@ -34,7 +35,7 @@ class TimeMachine(object):
 
     def __init__(self, mount_path, host=None, version=None, partition=None):
         logger.info('Set mount_path "%s"', mount_path)
-        self.mount_path = mount_path
+        self.mount_path = dst_path = self.get_absolute_path(mount_path)
         self._host = self._version = self._partition = None
         if host is not None:
             self.host = host
@@ -147,11 +148,16 @@ class TimeMachine(object):
         logger.debug('Real Path "%s" -> "%s"', path, new_path)
         return new_path
 
+    @staticmethod
+    def get_absolute_path(path):
+        return os.path.abspath(os.path.expanduser(path))
+
     def copy_path(self, path, dst_path):
         """
         Given a path that would have worked on the backed up machine,
         copy the path out of the timemachine to a specified location.
         """
+        dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy Path "%s" -> "%s" -> "%s"', path, real_path, dst_path)
         if real_path:
@@ -168,6 +174,7 @@ class TimeMachine(object):
         Given a path to a file that would have worked on the backed up machine,
         copy the path out of the timemachine to a specified location.
         """
+        dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy File "%s" -> "%s" -> "%s"', path, real_path, dst_path)
         shutil.copy(real_path, dst_path)
@@ -178,6 +185,7 @@ class TimeMachine(object):
         have worked on the backed up machine,
         copy the path out of the timemachine to a specified location.
         """
+        dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy Directory "%s" -> "%s" -> "%s"', path, real_path, dst_path)
         if path.endswith('/'):
@@ -228,13 +236,39 @@ class InteractiveTimeMachine(TimeMachine):
         else:
             self.interactive_directory_select(path)
 
-    def interactive_select(self, choices, message, evaluate=True):
-        print(message)
-        for i, choice in enumerate(choices):
-            print('{}. {}'.format(i, choice))
-        choice = raw_input('Enter 0-{}: '.format(len(choices) - 1))
-        if evaluate:
-            return choices[int(choice)]
+    def interactive_select(self, choices, message, depth=0):
+        if isinstance(choices, list):
+            choices = collections.OrderedDict([(i, choice) for i, choice in enumerate(choices)])
+
+        while 1:
+            print(message)
+            for i, choice in choices.items():
+                print('{}. {}'.format(i, choice))
+            choice = raw_input('Enter 0-{}: '.format(choices.keys()[-1]))
+            if (choice == '0' or choice == '..') and depth:
+                choice = None
+                break
+            if choice.isdigit() and int(choice) in choices:
+                choice = choices[int(choice)]
+                break
+            cs = collections.OrderedDict()
+            cs[0] = '..'
+            c = None
+            for i, c in choices.items():
+                if c == choice:
+                    break
+                if c.startswith(choice):
+                    cs[i] = c
+            if c == choice:
+                break
+            if len(cs) == 2:
+                choice = cs[cs.keys()[1]]
+                break
+            if len(cs) == 1:
+                continue
+            choice = self.interactive_select(cs, message, depth + 1)
+            if choice is not None:
+                break
         return choice
 
     def interactive_directory_select(self, path=None):
@@ -245,21 +279,19 @@ class InteractiveTimeMachine(TimeMachine):
                 self.interactive_copy_path(path)
                 break
             else:
-                choices = ['Quit', 'Copy directory {}'.format(path), '..'] + self.listdir(real_path)
+                choices = ['.', '..'] + self.listdir(real_path)
                 message = 'Select a directory to enter or file to copy:'
-                choice = int(self.interactive_select(choices, message, False))
-                if choice == 0:
-                    return
-                elif choice == 1:
+                choice = self.interactive_select(choices, message)
+                if choice == '.':
                     self.interactive_copy_path(path)
                     break
-                elif choice == 2:
+                elif choice == '..':
                     path = '/'.join(path.split('/')[:-1])
-                elif os.path.isfile(self.get_real_path(os.path.join(path, choices[choice]))):
-                    self.interactive_copy_path(os.path.join(path, choices[choice]))
+                elif os.path.isfile(self.get_real_path(os.path.join(path, choice))):
+                    self.interactive_copy_path(os.path.join(path, choice))
                     break
                 else:
-                    path = os.path.join(path, choices[choice])
+                    path = os.path.join(path, choice)
 
     def interactive_copy_path(self, path):
         dst_path = raw_input('Please enter a destination directory: ')
