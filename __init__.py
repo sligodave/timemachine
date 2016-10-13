@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 """
-
 NOTE: You should really run this with root access as it will probably be
 needed if you want full access to the Time Machine harddrive.
+Or if there's a mismatch between your current users ID and the original file owner's ID
 
 NOTE: This only supports files and directories.
 It skips over links or any other non file/directory items.
-
 """
 
 import shutil
