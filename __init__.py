@@ -159,14 +159,12 @@ class TimeMachine(object):
         dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy Path "%s" -> "%s" -> "%s"', path, real_path, dst_path)
-        if real_path:
-            if os.path.isfile(real_path):
-                self.copy_file(path, dst_path)
-            elif os.path.isdir(real_path):
-                self.copy_directory(path, dst_path)
-        else:
-            # TODO: Handle non file and directory items, such as links
-            pass
+        if not real_path or not os.path.exists(real_path):
+            logger.warn('Src path does not exist. Skipping. "%s" -> "%s"', path, real_path)
+        elif os.path.isfile(real_path):
+            self.copy_file(path, dst_path)
+        elif os.path.isdir(real_path):
+            self.copy_directory(path, dst_path)
 
     def copy_file(self, path, dst_path):
         """
@@ -176,7 +174,14 @@ class TimeMachine(object):
         dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy File "%s" -> "%s" -> "%s"', path, real_path, dst_path)
-        shutil.copy(real_path, dst_path)
+        if not real_path or not os.path.exists(real_path):
+            logger.warn('Src file path does not exist. Skipping. "%s" -> "%s"', path, real_path)
+        else:
+            try:
+                shutil.copy(real_path, dst_path)
+            except IOError as e:
+                raise
+                logger.warn('Could not copy file "%s" -> "%s" -> "%s"\n%s', path, real_path, dst_path, str(e))
 
     def copy_directory(self, path, dst_path):
         """
@@ -187,14 +192,17 @@ class TimeMachine(object):
         dst_path = self.get_absolute_path(dst_path)
         real_path = self.get_real_path(path)
         logger.info('Copy Directory "%s" -> "%s" -> "%s"', path, real_path, dst_path)
-        if path.endswith('/'):
-            path = path[:-1]
-        dst_path = os.path.join(dst_path, os.path.split(path)[1])
-        if not os.path.exists(dst_path):
-            os.makedirs(dst_path)
-        for item in self.listdir(real_path):
-            new_item_path = os.path.join(path, item)
-            self.copy_path(new_item_path, dst_path)
+        if not real_path or not os.path.exists(real_path):
+            logger.warn('Src directory path does not exist. Skipping. "%s" -> "%s"', path, real_path)
+        else:
+            if path.endswith('/'):
+                path = path[:-1]
+            dst_path = os.path.join(dst_path, os.path.split(path)[1])
+            if not os.path.exists(dst_path):
+                os.makedirs(dst_path)
+            for item in self.listdir(real_path):
+                new_item_path = os.path.join(path, item)
+                self.copy_path(new_item_path, dst_path)
 
     @staticmethod
     def listdir(path):
@@ -274,12 +282,15 @@ class InteractiveTimeMachine(TimeMachine):
         path = path if path else '/'
         while 1:
             real_path = self.get_real_path(path)
+            print(real_path)
             if os.path.isfile(real_path):
                 self.interactive_copy_path(path)
                 break
             else:
                 choices = ['.', '..'] + self.listdir(real_path)
-                message = 'Select a directory to enter or file to copy:'
+                message = '\n{}'.format('-' * 50)
+                message += '\nSelect a directory to enter or file to copy:'
+                message += '\nPWD: "{}"'.format(path)
                 choice = self.interactive_select(choices, message)
                 if choice == '.':
                     self.interactive_copy_path(path)
@@ -330,7 +341,7 @@ def get_arg(args, name):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.WARN, format='%(asctime)s - %(levelname)s - %(message)s')
     kwargs = {
         'mount_path': None,
         'host': None,
