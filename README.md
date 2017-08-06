@@ -10,35 +10,36 @@ This script allows you to copy a specific file or a directory and it's contents 
 
 ## NOTES:
 
-- I don't know how well it works on a Windows machine as I developed it in Ubuntu.
-- You should run this with root access (sudo) as you will probably need it to access all the files on the drive.
-- This only copies Files and Directories. It does not follow links.
+- I don't know how well it works on a Windows machine as I developed it in Ubuntu, it has also come in handy when I'm pulling files after moving to a new mac.
+- On occasion, you may get a permission denied error. When that happens you should run this with root access (sudo) as you will need it to access the protected files.
+- This only copies Files and Directories. It **does not follow links**.
 
 
 ## Usage:
 
 - Plug in your external HD
 - Launch a terminal
-- Two options:
-  - Interactive:
-    - This method presents you with prompts to pick the correct "hostname", "version" and "partition" from the TimeMachine. It will then allow you to navigate through the directory structure of your TimeMachine. You can select a specific directory or file to copy out of it. It will then prompt you for a destination directory.
-    - sudo python timemachine/__init__.py MOUNT_PATH
-    - e.g. sudo python timemachine/__init__.py /media/USERNAME/DRIVE_NAME
-  - Automatic:
-    - This method assumes that all reqiured variables have been provided. "mount_point", "hostname", "version", "partition", "source_path", "destination_directory". It will copy the "source_path" into the "destination_path".
-    - sudo python timemachine/__init__.py MOUNT_POINT HOSTNAME VERSION PARTITION SOURCE_PATH DESTINATION_PATH
-    - e.g. sudo python timemachine/__init__.py /media/USERNAME/DRIVE_NAME COMPUTER_NAME Latest Macintosh /User/USERNAME/Desktop/my_file.txt /home/USERNAME/Desktop/my_file.txt
+- > python timemachine/__init__.py --help
 
-- MOUNT_POINT = Where the external harddrive is mounted on your system.
-- HOSTNAME = The computer name that the Mac had.
-- VERSION = Each TimeMachine backup has a version or date, to get the latest use "Latest".
-- PARTITION = The partitions on your mac that were backed up. You usually have a main one called "Macintosh".
-- SOURCE_PATH = Path to the file or directory you want to copy. The path is as it would have been on your Mac.
-- DESTINATION_DIRECTORY = The directory you want to copy the supplied SOURCE_PATH to on your local machine.
+ > timemachine --mount_path PATH [--host HOST] [--version VERSION] [--partition PARTITION] [--path PATH] [--dst_path PATH]
+
+REQUIRED:
+--mount_path PATH           Location where the timemachine HD is mounted. Usually something like "/Volumes/EXTERNAL_HARDDRIVE".
+
+OPTIONAL:
+--path PATH            Source path (Directory or File) as it would have appeared on your old computer. E.g. /Users/USERNAME/Desktop/work.odt
+                       If a --dst_path is provided with this path, then we'll
+                       copy this source to the destination.
+                       If no --dst_path is provided then we'll enter interactive mode and you'll be prompted for commands.
+--host HOST            Name of the host who's timemachine we want to access. Defaults to one with the most recent version.
+--version VERSION      The name of the timemachine versions we want to access. Defaults to "Latest".
+--partition PARTITION  The name of the partition in the timemachine we want to access. Usually "Macintosh HD"
+--dst_path PATH        If provided we just copy path to dst_path, no interactive folder walking.
 
 
 ## ToDo:
 
+- Copy/Follow symlinks.
 
 
 ## Issues and suggestions:
@@ -47,6 +48,6 @@ Fire on any issues or suggestions you have.
 
 
 ## Copyright and license
-Copyright 2014 David Higgins
+Copyright 2017 David Higgins
 
 [MIT License](LICENSE)
